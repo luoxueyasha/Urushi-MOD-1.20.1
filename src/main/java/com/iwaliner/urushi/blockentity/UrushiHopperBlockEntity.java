@@ -114,7 +114,6 @@ public class UrushiHopperBlockEntity extends RandomizableContainerBlockEntity im
 
     }
 
-    // @debug
     @Override
     public boolean isEmpty(){
         return this.items.get(0).isEmpty();

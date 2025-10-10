@@ -111,7 +111,6 @@ public class FoxHopperBlockEntity extends RandomizableContainerBlockEntity imple
 
     }
 
-    // @debug
     @Override
     public boolean isEmpty(){
         for(ItemStack itemstack : this.items) {

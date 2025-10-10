@@ -76,6 +76,8 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
     // as I may corrupt these code. AI failed this challenge. If you are reading this and you are going to optimize
     // these, good luck.
 
+    // @debug, todo: pull these functions out of this BE section. luoxueyasha 2025/10/10
+
     /**入射角を設定*/
     @Override
     public void setIncidentDirection(ComplexDirection direction) {
@@ -93,75 +95,85 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         }else if(direction==Direction.WEST){
             this.incidentDirection= ComplexDirection.W.getID();
         }else if(direction==Direction.UP){
-            this.incidentDirection= ComplexDirection.U_NSdir.getID();
+            this.incidentDirection= ComplexDirection.U_NSd.getID();
         }else if(direction==Direction.DOWN){
-            this.incidentDirection= ComplexDirection.B1.getID();
+            this.incidentDirection= ComplexDirection.D_NSd.getID();
         }
     }
 
 
 
-    public static ComplexDirection getDirectionFromID(int i){
-        ComplexDirection complexDirection=ComplexDirection.FAIL;
-        for ( ComplexDirection f :ComplexDirection.values()) {
-            if (f.getID() == i) {
-                complexDirection=f;
-                break;
-            }
+    public static ComplexDirection getDirectionFromID(short i){
+        if((i&0x80) == 0){ // i is null
+            return ComplexDirection.FAIL;
         }
-        return complexDirection;
+
+        if((i & 0x70) == 0){ // has no u/d info
+            i &= 0x0F;
+            return switch (i){
+                case 0 -> ComplexDirection.N;
+                case 1 -> ComplexDirection.N_NE;
+                case 2 -> ComplexDirection.NE;
+                case 3 -> ComplexDirection.E_NE;
+                case 4 -> ComplexDirection.E;
+                case 5 -> ComplexDirection.E_SE;
+                case 6 -> ComplexDirection.SE;
+                case 7 -> ComplexDirection.S_SE;
+                case 8 -> ComplexDirection.S;
+                case 9 -> ComplexDirection.S_SW;
+                case 10 -> ComplexDirection.SW;
+                case 11 -> ComplexDirection.W_SW;
+                case 12 -> ComplexDirection.W;
+                case 13 -> ComplexDirection.W_NW;
+                case 14 -> ComplexDirection.NW;
+                case 15 -> ComplexDirection.N_NW;
+                default -> ComplexDirection.FAIL;
+            };
+        }
+        // has U/D info
+        i &= 0x7C;
+        // @debug, 写不出来回头再想
+
+        return ComplexDirection.FAIL;
     }
 
     /**180度の方角を返す*/
     public static ComplexDirection getOppositeDirection(ComplexDirection direction){
-        if(direction==ComplexDirection.FAIL){
+        short id = direction.getID();
+        if((id&0x80) == 0){
             return ComplexDirection.FAIL;
-        }else if(direction.getID()<9){
-           return getDirectionFromID(direction.getID()+8);
-        }else if(direction.getID()<17){
-            return getDirectionFromID(direction.getID()-8);
-        }else if(direction.getID()<23){
-            return getDirectionFromID(direction.getID()+20);
-        }else if(direction.getID()<29){
-            return getDirectionFromID(direction.getID()+8);
-        }else if(direction.getID()==29){
-            return getDirectionFromID(43);
-        }else if(direction.getID()==30){
-            return getDirectionFromID(44);
-        }else if(direction.getID()<37){
-            return getDirectionFromID(direction.getID()-8);
-        }else if(direction.getID()<43){
-            return getDirectionFromID(direction.getID()-20);
-        }else if(direction.getID()==43){
-            return getDirectionFromID(29);
-        }else if(direction.getID()==44){
-            return getDirectionFromID(30);
         }
-        return ComplexDirection.FAIL;
+        return getDirectionFromID((byte) (id|0x08));
     }
 
     /**右回りに90度の方角を返す*/
     private ComplexDirection getClockwise90DegreesDirection(ComplexDirection direction){
-        if(direction==ComplexDirection.FAIL){
+        short id = direction.getID();
+        if((id&0x80) == 0){ // null
             return ComplexDirection.FAIL;
-        }else if(direction.getID()<13){
-            return getDirectionFromID(direction.getID()+4);
-        }else if(direction.getID()<17){
-            return getDirectionFromID(direction.getID()-12);
         }
-        return ComplexDirection.FAIL;
+        if((id&0x70) != 0){ // has U/D info
+            return ComplexDirection.FAIL;
+        }
+
+        id += 4;
+        id &= (byte) 0x8F; // mod16
+        return getDirectionFromID(id);
     }
 
     /**左回りに90度の方角を返す*/
     private ComplexDirection getCounterClockwise90DegreesDirection(ComplexDirection direction){
-        if(direction==ComplexDirection.FAIL){
+        short id = direction.getID();
+        if((id&0x80) == 0){ // null
             return ComplexDirection.FAIL;
-        }else if(direction.getID()<5){
-            return getDirectionFromID(direction.getID()+12);
-        }else if(direction.getID()<17){
-            return getDirectionFromID(direction.getID()-4);
         }
-        return ComplexDirection.FAIL;
+        if((id&0x70) != 0){ // has U/D info
+            return ComplexDirection.FAIL;
+        }
+        id += 12; // -=4
+        id &= (byte) 0x8F;
+
+        return getDirectionFromID(id);
     }
 
     /**右回りに22.5度の方角を返す*/
@@ -262,20 +274,20 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         if(direction==ComplexDirection.FAIL){
             return ComplexDirection.FAIL;
         }else if(direction==ComplexDirection.N){
-            return ComplexDirection.U_NSdir;
-        }else if(direction==ComplexDirection.U_NSdir){
+            return ComplexDirection.U_NSd;
+        }else if(direction==ComplexDirection.U_NSd){
             return ComplexDirection.S;
         }else if(direction==ComplexDirection.S){
-            return ComplexDirection.B1;
-        }else if(direction==ComplexDirection.B1){
+            return ComplexDirection.D_NSd;
+        }else if(direction==ComplexDirection.D_NSd){
             return ComplexDirection.N;
         }else if(direction==ComplexDirection.E){
-            return ComplexDirection.U_WEdir;
-        }else if(direction==ComplexDirection.U_WEdir){
+            return ComplexDirection.U_WEd;
+        }else if(direction==ComplexDirection.U_WEd){
             return ComplexDirection.W;
         }else if(direction==ComplexDirection.W){
-            return ComplexDirection.B2;
-        }else if(direction==ComplexDirection.B2){
+            return ComplexDirection.D_WEd;
+        }else if(direction==ComplexDirection.D_WEd){
             return ComplexDirection.E;
         }else if(direction==ComplexDirection.N_UN){
             return ComplexDirection.U_US;
@@ -284,22 +296,22 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         }else if(direction==ComplexDirection.U_UN){
             return ComplexDirection.S_US;
         }else if(direction==ComplexDirection.U_US){
-            return ComplexDirection.S_BS;
+            return ComplexDirection.D_DS;
         }else if(direction==ComplexDirection.US){
-            return ComplexDirection.BS;
+            return ComplexDirection.DS;
         }else if(direction==ComplexDirection.S_US){
-            return ComplexDirection.B_BS;
-        }else if(direction==ComplexDirection.S_BS){
-            return ComplexDirection.B_BN;
-        }else if(direction==ComplexDirection.BS){
-            return ComplexDirection.BN;
-        }else if(direction==ComplexDirection.B_BS){
-            return ComplexDirection.N_BN;
-        }else if(direction==ComplexDirection.B_BN){
+            return ComplexDirection.S_DS;
+        }else if(direction==ComplexDirection.D_DS){
+            return ComplexDirection.D_DN;
+        }else if(direction==ComplexDirection.DS){
+            return ComplexDirection.DN;
+        }else if(direction==ComplexDirection.S_DS){
+            return ComplexDirection.N_DN;
+        }else if(direction==ComplexDirection.D_DN){
             return ComplexDirection.N_UN;
-        }else if(direction==ComplexDirection.BN){
+        }else if(direction==ComplexDirection.DN){
             return ComplexDirection.UN;
-        }else if(direction==ComplexDirection.N_BN){
+        }else if(direction==ComplexDirection.N_DN){
             return ComplexDirection.U_UN;
         }else if(direction==ComplexDirection.E_UE){
             return ComplexDirection.U_UW;
@@ -308,22 +320,22 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         }else if(direction==ComplexDirection.U_UE){
             return ComplexDirection.W_UW;
         }else if(direction==ComplexDirection.U_UW){
-            return ComplexDirection.W_BW;
+            return ComplexDirection.W_DW;
         }else if(direction==ComplexDirection.UW){
-            return ComplexDirection.BW;
+            return ComplexDirection.DW;
         }else if(direction==ComplexDirection.W_UW){
-            return ComplexDirection.B_BW;
-        }else if(direction==ComplexDirection.W_BW){
-            return ComplexDirection.B_BE;
-        }else if(direction==ComplexDirection.BW){
-            return ComplexDirection.BE;
-        }else if(direction==ComplexDirection.B_BW){
-            return ComplexDirection.E_BE;
-        }else if(direction==ComplexDirection.B_BE){
+            return ComplexDirection.D_DW;
+        }else if(direction==ComplexDirection.W_DW){
+            return ComplexDirection.D_DE;
+        }else if(direction==ComplexDirection.DW){
+            return ComplexDirection.DE;
+        }else if(direction==ComplexDirection.D_DW){
+            return ComplexDirection.E_DE;
+        }else if(direction==ComplexDirection.D_DE){
             return ComplexDirection.E_UE;
-        }else if(direction==ComplexDirection.BE){
+        }else if(direction==ComplexDirection.DE){
             return ComplexDirection.UE;
-        }else if(direction==ComplexDirection.E_BE){
+        }else if(direction==ComplexDirection.E_DE){
             return ComplexDirection.U_UE;
         }
         return ComplexDirection.FAIL;
@@ -333,69 +345,69 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         if(direction==ComplexDirection.FAIL){
             return ComplexDirection.FAIL;
         }else if(direction==ComplexDirection.N){
-            return ComplexDirection.B1;
-        }else if(direction==ComplexDirection.B1){
+            return ComplexDirection.D_NSd;
+        }else if(direction==ComplexDirection.D_NSd){
             return ComplexDirection.S;
         }else if(direction==ComplexDirection.S){
-            return ComplexDirection.U_NSdir;
-        }else if(direction==ComplexDirection.U_NSdir){
+            return ComplexDirection.U_NSd;
+        }else if(direction==ComplexDirection.U_NSd){
             return ComplexDirection.N;
         }else if(direction==ComplexDirection.E){
-            return ComplexDirection.B2;
-        }else if(direction==ComplexDirection.B2){
+            return ComplexDirection.D_WEd;
+        }else if(direction==ComplexDirection.D_WEd){
             return ComplexDirection.W;
         }else if(direction==ComplexDirection.W){
-            return ComplexDirection.U_WEdir;
-        }else if(direction==ComplexDirection.U_WEdir){
+            return ComplexDirection.U_WEd;
+        }else if(direction==ComplexDirection.U_WEd){
             return ComplexDirection.E;
         }else if(direction==ComplexDirection.N_UN){
-            return ComplexDirection.B_BN;
+            return ComplexDirection.D_DN;
         }else if(direction==ComplexDirection.UN){
-            return ComplexDirection.BN;
+            return ComplexDirection.DN;
         }else if(direction==ComplexDirection.U_UN){
-            return ComplexDirection.N_BN;
+            return ComplexDirection.N_DN;
         }else if(direction==ComplexDirection.U_US){
             return ComplexDirection.N_UN;
         }else if(direction==ComplexDirection.US){
             return ComplexDirection.UN;
         }else if(direction==ComplexDirection.S_US){
             return ComplexDirection.U_UN;
-        }else if(direction==ComplexDirection.S_BS){
+        }else if(direction==ComplexDirection.D_DS){
             return ComplexDirection.U_US;
-        }else if(direction==ComplexDirection.BS){
+        }else if(direction==ComplexDirection.DS){
             return ComplexDirection.US;
-        }else if(direction==ComplexDirection.B_BS){
+        }else if(direction==ComplexDirection.S_DS){
             return ComplexDirection.S_US;
-        }else if(direction==ComplexDirection.B_BN){
-            return ComplexDirection.S_BS;
-        }else if(direction==ComplexDirection.BN){
-            return ComplexDirection.BS;
-        }else if(direction==ComplexDirection.N_BN){
-            return ComplexDirection.B_BS;
+        }else if(direction==ComplexDirection.D_DN){
+            return ComplexDirection.D_DS;
+        }else if(direction==ComplexDirection.DN){
+            return ComplexDirection.DS;
+        }else if(direction==ComplexDirection.N_DN){
+            return ComplexDirection.S_DS;
         }else if(direction==ComplexDirection.E_UE){
-            return ComplexDirection.B_BE;
+            return ComplexDirection.D_DE;
         }else if(direction==ComplexDirection.UE){
-            return ComplexDirection.BE;
+            return ComplexDirection.DE;
         }else if(direction==ComplexDirection.U_UE){
-            return ComplexDirection.E_BE;
+            return ComplexDirection.E_DE;
         }else if(direction==ComplexDirection.U_UW){
             return ComplexDirection.E_UE;
         }else if(direction==ComplexDirection.UW){
             return ComplexDirection.UE;
         }else if(direction==ComplexDirection.W_UW){
             return ComplexDirection.U_UE;
-        }else if(direction==ComplexDirection.W_BW){
+        }else if(direction==ComplexDirection.W_DW){
             return ComplexDirection.U_UW;
-        }else if(direction==ComplexDirection.BW){
+        }else if(direction==ComplexDirection.DW){
             return ComplexDirection.UW;
-        }else if(direction==ComplexDirection.B_BW){
+        }else if(direction==ComplexDirection.D_DW){
             return ComplexDirection.W_UW;
-        }else if(direction==ComplexDirection.B_BE){
-            return ComplexDirection.W_BW;
-        }else if(direction==ComplexDirection.BE){
-            return ComplexDirection.BW;
-        }else if(direction==ComplexDirection.E_BE){
-            return ComplexDirection.B_BW;
+        }else if(direction==ComplexDirection.D_DE){
+            return ComplexDirection.W_DW;
+        }else if(direction==ComplexDirection.DE){
+            return ComplexDirection.DW;
+        }else if(direction==ComplexDirection.E_DE){
+            return ComplexDirection.D_DW;
         }
         return ComplexDirection.FAIL;
     }
@@ -405,24 +417,24 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
             return ComplexDirection.FAIL;
         }else if(direction==ComplexDirection.N){
             return ComplexDirection.UN;
-        }else if(direction==ComplexDirection.U_NSdir){
+        }else if(direction==ComplexDirection.U_NSd){
             return ComplexDirection.US;
         }else if(direction==ComplexDirection.S){
-            return ComplexDirection.BS;
-        }else if(direction==ComplexDirection.B1){
-            return ComplexDirection.BN;
+            return ComplexDirection.DS;
+        }else if(direction==ComplexDirection.D_NSd){
+            return ComplexDirection.DN;
         }else if(direction==ComplexDirection.E){
             return ComplexDirection.UE;
-        }else if(direction==ComplexDirection.U_WEdir){
+        }else if(direction==ComplexDirection.U_WEd){
             return ComplexDirection.UW;
         }else if(direction==ComplexDirection.W){
-            return ComplexDirection.BW;
-        }else if(direction==ComplexDirection.B2){
-            return ComplexDirection.BE;
+            return ComplexDirection.DW;
+        }else if(direction==ComplexDirection.D_WEd){
+            return ComplexDirection.DE;
         }else if(direction==ComplexDirection.N_UN){
             return ComplexDirection.U_UN;
         }else if(direction==ComplexDirection.UN){
-            return ComplexDirection.U_NSdir;
+            return ComplexDirection.U_NSd;
         }else if(direction==ComplexDirection.U_UN){
             return ComplexDirection.U_US;
         }else if(direction==ComplexDirection.U_US){
@@ -430,23 +442,23 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         }else if(direction==ComplexDirection.US){
             return ComplexDirection.S;
         }else if(direction==ComplexDirection.S_US){
-            return ComplexDirection.S_BS;
-        }else if(direction==ComplexDirection.S_BS){
-            return ComplexDirection.B_BS;
-        }else if(direction==ComplexDirection.BS){
-            return ComplexDirection.B1;
-        }else if(direction==ComplexDirection.B_BS){
-            return ComplexDirection.B_BN;
-        }else if(direction==ComplexDirection.B_BN){
-            return ComplexDirection.N_BN;
-        }else if(direction==ComplexDirection.BN){
+            return ComplexDirection.D_DS;
+        }else if(direction==ComplexDirection.D_DS){
+            return ComplexDirection.S_DS;
+        }else if(direction==ComplexDirection.DS){
+            return ComplexDirection.D_NSd;
+        }else if(direction==ComplexDirection.S_DS){
+            return ComplexDirection.D_DN;
+        }else if(direction==ComplexDirection.D_DN){
+            return ComplexDirection.N_DN;
+        }else if(direction==ComplexDirection.DN){
             return ComplexDirection.N;
-        }else if(direction==ComplexDirection.N_BN){
+        }else if(direction==ComplexDirection.N_DN){
             return ComplexDirection.N_UN;
         }else if(direction==ComplexDirection.E_UE){
             return ComplexDirection.U_UE;
         }else if(direction==ComplexDirection.UE){
-            return ComplexDirection.U_WEdir;
+            return ComplexDirection.U_WEd;
         }else if(direction==ComplexDirection.U_UE){
             return ComplexDirection.U_UW;
         }else if(direction==ComplexDirection.U_UW){
@@ -454,18 +466,18 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         }else if(direction==ComplexDirection.UW){
             return ComplexDirection.W;
         }else if(direction==ComplexDirection.W_UW){
-            return ComplexDirection.W_BW;
-        }else if(direction==ComplexDirection.W_BW){
-            return ComplexDirection.B_BW;
-        }else if(direction==ComplexDirection.BW){
-            return ComplexDirection.B2;
-        }else if(direction==ComplexDirection.B_BW){
-            return ComplexDirection.B_BE;
-        }else if(direction==ComplexDirection.B_BE){
-            return ComplexDirection.E_BE;
-        }else if(direction==ComplexDirection.BE){
+            return ComplexDirection.W_DW;
+        }else if(direction==ComplexDirection.W_DW){
+            return ComplexDirection.D_DW;
+        }else if(direction==ComplexDirection.DW){
+            return ComplexDirection.D_WEd;
+        }else if(direction==ComplexDirection.D_DW){
+            return ComplexDirection.D_DE;
+        }else if(direction==ComplexDirection.D_DE){
+            return ComplexDirection.E_DE;
+        }else if(direction==ComplexDirection.DE){
             return ComplexDirection.E;
-        }else if(direction==ComplexDirection.E_BE){
+        }else if(direction==ComplexDirection.E_DE){
             return ComplexDirection.E_UE;
         }
         return ComplexDirection.FAIL;
@@ -475,23 +487,23 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         if(direction==ComplexDirection.FAIL){
             return ComplexDirection.FAIL;
         }else if(direction==ComplexDirection.N){
-            return ComplexDirection.BN;
-        }else if(direction==ComplexDirection.U_NSdir){
+            return ComplexDirection.DN;
+        }else if(direction==ComplexDirection.U_NSd){
             return ComplexDirection.UN;
         }else if(direction==ComplexDirection.S){
             return ComplexDirection.US;
-        }else if(direction==ComplexDirection.B1){
-            return ComplexDirection.BS;
+        }else if(direction==ComplexDirection.D_NSd){
+            return ComplexDirection.DS;
         }else if(direction==ComplexDirection.E){
-            return ComplexDirection.BE;
-        }else if(direction==ComplexDirection.U_WEdir){
+            return ComplexDirection.DE;
+        }else if(direction==ComplexDirection.U_WEd){
             return ComplexDirection.UE;
         }else if(direction==ComplexDirection.W){
             return ComplexDirection.UW;
-        }else if(direction==ComplexDirection.B2){
-            return ComplexDirection.BW;
+        }else if(direction==ComplexDirection.D_WEd){
+            return ComplexDirection.DW;
         }else if(direction==ComplexDirection.N_UN){
-            return ComplexDirection.N_BN;
+            return ComplexDirection.N_DN;
         }else if(direction==ComplexDirection.UN){
             return ComplexDirection.N;
         }else if(direction==ComplexDirection.U_UN){
@@ -499,23 +511,23 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         }else if(direction==ComplexDirection.U_US){
             return ComplexDirection.U_UN;
         }else if(direction==ComplexDirection.US){
-            return ComplexDirection.U_NSdir;
+            return ComplexDirection.U_NSd;
         }else if(direction==ComplexDirection.S_US){
             return ComplexDirection.U_US;
-        }else if(direction==ComplexDirection.S_BS){
+        }else if(direction==ComplexDirection.D_DS){
             return ComplexDirection.S_US;
-        }else if(direction==ComplexDirection.BS){
+        }else if(direction==ComplexDirection.DS){
             return ComplexDirection.S;
-        }else if(direction==ComplexDirection.B_BS){
-            return ComplexDirection.S_BS;
-        }else if(direction==ComplexDirection.B_BN){
-            return ComplexDirection.B_BS;
-        }else if(direction==ComplexDirection.BN){
-            return ComplexDirection.B1;
-        }else if(direction==ComplexDirection.N_BN){
-            return ComplexDirection.B_BN;
+        }else if(direction==ComplexDirection.S_DS){
+            return ComplexDirection.D_DS;
+        }else if(direction==ComplexDirection.D_DN){
+            return ComplexDirection.S_DS;
+        }else if(direction==ComplexDirection.DN){
+            return ComplexDirection.D_NSd;
+        }else if(direction==ComplexDirection.N_DN){
+            return ComplexDirection.D_DN;
         }else if(direction==ComplexDirection.E_UE){
-            return ComplexDirection.E_BE;
+            return ComplexDirection.E_DE;
         }else if(direction==ComplexDirection.UE){
             return ComplexDirection.E;
         }else if(direction==ComplexDirection.U_UE){
@@ -523,21 +535,21 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         }else if(direction==ComplexDirection.U_UW){
             return ComplexDirection.U_UE;
         }else if(direction==ComplexDirection.UW){
-            return ComplexDirection.U_WEdir;
+            return ComplexDirection.U_WEd;
         }else if(direction==ComplexDirection.W_UW){
             return ComplexDirection.U_UW;
-        }else if(direction==ComplexDirection.W_BW){
+        }else if(direction==ComplexDirection.W_DW){
             return ComplexDirection.W_UW;
-        }else if(direction==ComplexDirection.BW){
+        }else if(direction==ComplexDirection.DW){
             return ComplexDirection.W;
-        }else if(direction==ComplexDirection.B_BW){
-            return ComplexDirection.W_BW;
-        }else if(direction==ComplexDirection.B_BE){
-            return ComplexDirection.B_BW;
-        }else if(direction==ComplexDirection.BE){
-            return ComplexDirection.B2;
-        }else if(direction==ComplexDirection.E_BE){
-            return ComplexDirection.B_BE;
+        }else if(direction==ComplexDirection.D_DW){
+            return ComplexDirection.W_DW;
+        }else if(direction==ComplexDirection.D_DE){
+            return ComplexDirection.D_DW;
+        }else if(direction==ComplexDirection.DE){
+            return ComplexDirection.D_WEd;
+        }else if(direction==ComplexDirection.E_DE){
+            return ComplexDirection.D_DE;
         }
         return ComplexDirection.FAIL;
     }
@@ -547,67 +559,67 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
             return ComplexDirection.FAIL;
         }else if(direction==ComplexDirection.N){
                 return ComplexDirection.N_UN;
-        }else if(direction==ComplexDirection.U_NSdir){
+        }else if(direction==ComplexDirection.U_NSd){
             return ComplexDirection.U_US;
         }else if(direction==ComplexDirection.S){
-            return ComplexDirection.S_BS;
-        }else if(direction==ComplexDirection.B1){
-            return ComplexDirection.B_BN;
+            return ComplexDirection.D_DS;
+        }else if(direction==ComplexDirection.D_NSd){
+            return ComplexDirection.D_DN;
         }else if(direction==ComplexDirection.E){
             return ComplexDirection.E_UE;
-        }else if(direction==ComplexDirection.U_WEdir){
+        }else if(direction==ComplexDirection.U_WEd){
             return ComplexDirection.U_UW;
         }else if(direction==ComplexDirection.W){
-            return ComplexDirection.W_BW;
-        }else if(direction==ComplexDirection.B2){
-            return ComplexDirection.B_BE;
+            return ComplexDirection.W_DW;
+        }else if(direction==ComplexDirection.D_WEd){
+            return ComplexDirection.D_DE;
         }else if(direction==ComplexDirection.N_UN){
             return ComplexDirection.UN;
         }else if(direction==ComplexDirection.UN){
             return ComplexDirection.U_UN;
         }else if(direction==ComplexDirection.U_UN){
-            return ComplexDirection.U_NSdir;
+            return ComplexDirection.U_NSd;
         }else if(direction==ComplexDirection.U_US){
             return ComplexDirection.US;
         }else if(direction==ComplexDirection.US){
             return ComplexDirection.S_US;
         }else if(direction==ComplexDirection.S_US){
             return ComplexDirection.S;
-        }else if(direction==ComplexDirection.S_BS){
-            return ComplexDirection.BS;
-        }else if(direction==ComplexDirection.BS){
-            return ComplexDirection.B_BS;
-        }else if(direction==ComplexDirection.B_BS){
-            return ComplexDirection.B1;
-        }else if(direction==ComplexDirection.B_BN){
-            return ComplexDirection.BN;
-        }else if(direction==ComplexDirection.BN){
-            return ComplexDirection.N_BN;
-        }else if(direction==ComplexDirection.N_BN){
+        }else if(direction==ComplexDirection.D_DS){
+            return ComplexDirection.DS;
+        }else if(direction==ComplexDirection.DS){
+            return ComplexDirection.S_DS;
+        }else if(direction==ComplexDirection.S_DS){
+            return ComplexDirection.D_NSd;
+        }else if(direction==ComplexDirection.D_DN){
+            return ComplexDirection.DN;
+        }else if(direction==ComplexDirection.DN){
+            return ComplexDirection.N_DN;
+        }else if(direction==ComplexDirection.N_DN){
             return ComplexDirection.N;
         }else if(direction==ComplexDirection.E_UE){
             return ComplexDirection.UE;
         }else if(direction==ComplexDirection.UE){
             return ComplexDirection.U_UE;
         }else if(direction==ComplexDirection.U_UE){
-            return ComplexDirection.U_WEdir;
+            return ComplexDirection.U_WEd;
         }else if(direction==ComplexDirection.U_UW){
             return ComplexDirection.UW;
         }else if(direction==ComplexDirection.UW){
             return ComplexDirection.W_UW;
         }else if(direction==ComplexDirection.W_UW){
             return ComplexDirection.W;
-        }else if(direction==ComplexDirection.W_BW){
-            return ComplexDirection.BW;
-        }else if(direction==ComplexDirection.BW){
-            return ComplexDirection.B_BW;
-        }else if(direction==ComplexDirection.B_BW){
-            return ComplexDirection.B2;
-        }else if(direction==ComplexDirection.B_BE){
-            return ComplexDirection.BE;
-        }else if(direction==ComplexDirection.BE){
-            return ComplexDirection.E_BE;
-        }else if(direction==ComplexDirection.E_BE){
+        }else if(direction==ComplexDirection.W_DW){
+            return ComplexDirection.DW;
+        }else if(direction==ComplexDirection.DW){
+            return ComplexDirection.D_DW;
+        }else if(direction==ComplexDirection.D_DW){
+            return ComplexDirection.D_WEd;
+        }else if(direction==ComplexDirection.D_DE){
+            return ComplexDirection.DE;
+        }else if(direction==ComplexDirection.DE){
+            return ComplexDirection.E_DE;
+        }else if(direction==ComplexDirection.E_DE){
             return ComplexDirection.E;
         }
         return ComplexDirection.FAIL;
@@ -617,21 +629,21 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         if(direction==ComplexDirection.FAIL){
             return ComplexDirection.FAIL;
         }else if(direction==ComplexDirection.N){
-            return ComplexDirection.N_BN;
-        }else if(direction==ComplexDirection.U_NSdir){
+            return ComplexDirection.N_DN;
+        }else if(direction==ComplexDirection.U_NSd){
             return ComplexDirection.U_UN;
         }else if(direction==ComplexDirection.S){
             return ComplexDirection.S_US;
-        }else if(direction==ComplexDirection.B1){
-            return ComplexDirection.B_BS;
+        }else if(direction==ComplexDirection.D_NSd){
+            return ComplexDirection.S_DS;
         }else if(direction==ComplexDirection.E){
-            return ComplexDirection.E_BE;
-        }else if(direction==ComplexDirection.U_WEdir){
+            return ComplexDirection.E_DE;
+        }else if(direction==ComplexDirection.U_WEd){
             return ComplexDirection.U_UE;
         }else if(direction==ComplexDirection.W){
             return ComplexDirection.W_UW;
-        }else if(direction==ComplexDirection.B2){
-            return ComplexDirection.B_BW;
+        }else if(direction==ComplexDirection.D_WEd){
+            return ComplexDirection.D_DW;
         }else if(direction==ComplexDirection.N_UN){
             return ComplexDirection.N;
         }else if(direction==ComplexDirection.UN){
@@ -639,23 +651,23 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         }else if(direction==ComplexDirection.U_UN){
             return ComplexDirection.UN;
         }else if(direction==ComplexDirection.U_US){
-            return ComplexDirection.U_NSdir;
+            return ComplexDirection.U_NSd;
         }else if(direction==ComplexDirection.US){
             return ComplexDirection.U_US;
         }else if(direction==ComplexDirection.S_US){
             return ComplexDirection.US;
-        }else if(direction==ComplexDirection.S_BS){
+        }else if(direction==ComplexDirection.D_DS){
             return ComplexDirection.S;
-        }else if(direction==ComplexDirection.BS){
-            return ComplexDirection.S_BS;
-        }else if(direction==ComplexDirection.B_BS){
-            return ComplexDirection.BS;
-        }else if(direction==ComplexDirection.B_BN){
-            return ComplexDirection.B1;
-        }else if(direction==ComplexDirection.BN){
-            return ComplexDirection.B_BN;
-        }else if(direction==ComplexDirection.N_BN){
-            return ComplexDirection.BN;
+        }else if(direction==ComplexDirection.DS){
+            return ComplexDirection.D_DS;
+        }else if(direction==ComplexDirection.S_DS){
+            return ComplexDirection.DS;
+        }else if(direction==ComplexDirection.D_DN){
+            return ComplexDirection.D_NSd;
+        }else if(direction==ComplexDirection.DN){
+            return ComplexDirection.D_DN;
+        }else if(direction==ComplexDirection.N_DN){
+            return ComplexDirection.DN;
         }else if(direction==ComplexDirection.E_UE){
             return ComplexDirection.E;
         }else if(direction==ComplexDirection.UE){
@@ -663,23 +675,23 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         }else if(direction==ComplexDirection.U_UE){
             return ComplexDirection.UE;
         }else if(direction==ComplexDirection.U_UW){
-            return ComplexDirection.U_WEdir;
+            return ComplexDirection.U_WEd;
         }else if(direction==ComplexDirection.UW){
             return ComplexDirection.U_UW;
         }else if(direction==ComplexDirection.W_UW){
             return ComplexDirection.UW;
-        }else if(direction==ComplexDirection.W_BW){
+        }else if(direction==ComplexDirection.W_DW){
             return ComplexDirection.W;
-        }else if(direction==ComplexDirection.BW){
-            return ComplexDirection.W_BW;
-        }else if(direction==ComplexDirection.B_BW){
-            return ComplexDirection.BW;
-        }else if(direction==ComplexDirection.B_BE){
-            return ComplexDirection.B2;
-        }else if(direction==ComplexDirection.BE){
-            return ComplexDirection.B_BE;
-        }else if(direction==ComplexDirection.E_BE){
-            return ComplexDirection.BE;
+        }else if(direction==ComplexDirection.DW){
+            return ComplexDirection.W_DW;
+        }else if(direction==ComplexDirection.D_DW){
+            return ComplexDirection.DW;
+        }else if(direction==ComplexDirection.D_DE){
+            return ComplexDirection.D_WEd;
+        }else if(direction==ComplexDirection.DE){
+            return ComplexDirection.D_DE;
+        }else if(direction==ComplexDirection.E_DE){
+            return ComplexDirection.DE;
         }
         return ComplexDirection.FAIL;
     }
@@ -689,22 +701,22 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
             return ComplexDirection.FAIL;
         }else if(direction==ComplexDirection.N){
             return ComplexDirection.U_UN;
-        }else if(direction==ComplexDirection.U_NSdir){
+        }else if(direction==ComplexDirection.U_NSd){
             return ComplexDirection.S_US;
         }else if(direction==ComplexDirection.S){
-            return ComplexDirection.B_BS;
-        }else if(direction==ComplexDirection.B1){
-            return ComplexDirection.N_BN;
+            return ComplexDirection.S_DS;
+        }else if(direction==ComplexDirection.D_NSd){
+            return ComplexDirection.N_DN;
         }else if(direction==ComplexDirection.E){
             return ComplexDirection.U_UE;
-        }else if(direction==ComplexDirection.U_WEdir){
+        }else if(direction==ComplexDirection.U_WEd){
             return ComplexDirection.W_UW;
         }else if(direction==ComplexDirection.W){
-            return ComplexDirection.B_BW;
-        }else if(direction==ComplexDirection.B2){
-            return ComplexDirection.E_BE;
+            return ComplexDirection.D_DW;
+        }else if(direction==ComplexDirection.D_WEd){
+            return ComplexDirection.E_DE;
         }else if(direction==ComplexDirection.N_UN){
-            return ComplexDirection.U_NSdir;
+            return ComplexDirection.U_NSd;
         }else if(direction==ComplexDirection.UN){
             return ComplexDirection.U_US;
         }else if(direction==ComplexDirection.U_UN){
@@ -712,23 +724,23 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         }else if(direction==ComplexDirection.U_US){
             return ComplexDirection.S;
         }else if(direction==ComplexDirection.US){
-            return ComplexDirection.S_BS;
+            return ComplexDirection.D_DS;
         }else if(direction==ComplexDirection.S_US){
-            return ComplexDirection.BS;
-        }else if(direction==ComplexDirection.S_BS){
-            return ComplexDirection.B1;
-        }else if(direction==ComplexDirection.BS){
-            return ComplexDirection.B_BN;
-        }else if(direction==ComplexDirection.B_BS){
-            return ComplexDirection.BN;
-        }else if(direction==ComplexDirection.B_BN){
+            return ComplexDirection.DS;
+        }else if(direction==ComplexDirection.D_DS){
+            return ComplexDirection.D_NSd;
+        }else if(direction==ComplexDirection.DS){
+            return ComplexDirection.D_DN;
+        }else if(direction==ComplexDirection.S_DS){
+            return ComplexDirection.DN;
+        }else if(direction==ComplexDirection.D_DN){
             return ComplexDirection.N;
-        }else if(direction==ComplexDirection.BN){
+        }else if(direction==ComplexDirection.DN){
             return ComplexDirection.N_UN;
-        }else if(direction==ComplexDirection.N_BN){
+        }else if(direction==ComplexDirection.N_DN){
             return ComplexDirection.UN;
         }else if(direction==ComplexDirection.E_UE){
-            return ComplexDirection.U_WEdir;
+            return ComplexDirection.U_WEd;
         }else if(direction==ComplexDirection.UE){
             return ComplexDirection.U_UW;
         }else if(direction==ComplexDirection.U_UE){
@@ -736,20 +748,20 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         }else if(direction==ComplexDirection.U_UW){
             return ComplexDirection.W;
         }else if(direction==ComplexDirection.UW){
-            return ComplexDirection.W_BW;
+            return ComplexDirection.W_DW;
         }else if(direction==ComplexDirection.W_UW){
-            return ComplexDirection.BW;
-        }else if(direction==ComplexDirection.W_BW){
-            return ComplexDirection.B2;
-        }else if(direction==ComplexDirection.BW){
-            return ComplexDirection.B_BE;
-        }else if(direction==ComplexDirection.B_BW){
-            return ComplexDirection.BE;
-        }else if(direction==ComplexDirection.B_BE){
+            return ComplexDirection.DW;
+        }else if(direction==ComplexDirection.W_DW){
+            return ComplexDirection.D_WEd;
+        }else if(direction==ComplexDirection.DW){
+            return ComplexDirection.D_DE;
+        }else if(direction==ComplexDirection.D_DW){
+            return ComplexDirection.DE;
+        }else if(direction==ComplexDirection.D_DE){
             return ComplexDirection.E;
-        }else if(direction==ComplexDirection.BE){
+        }else if(direction==ComplexDirection.DE){
             return ComplexDirection.E_UE;
-        }else if(direction==ComplexDirection.E_BE){
+        }else if(direction==ComplexDirection.E_DE){
             return ComplexDirection.UE;
         }
         return ComplexDirection.FAIL;
@@ -759,25 +771,25 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         if(direction==ComplexDirection.FAIL){
             return ComplexDirection.FAIL;
         }else if(direction==ComplexDirection.N){
-            return ComplexDirection.B_BN;
-        }else if(direction==ComplexDirection.U_NSdir){
+            return ComplexDirection.D_DN;
+        }else if(direction==ComplexDirection.U_NSd){
             return ComplexDirection.N_UN;
         }else if(direction==ComplexDirection.S){
             return ComplexDirection.U_US;
-        }else if(direction==ComplexDirection.B1){
-            return ComplexDirection.S_BS;
+        }else if(direction==ComplexDirection.D_NSd){
+            return ComplexDirection.D_DS;
         }else if(direction==ComplexDirection.E){
-            return ComplexDirection.B_BE;
-        }else if(direction==ComplexDirection.U_WEdir){
+            return ComplexDirection.D_DE;
+        }else if(direction==ComplexDirection.U_WEd){
             return ComplexDirection.E_UE;
         }else if(direction==ComplexDirection.W){
             return ComplexDirection.U_UW;
-        }else if(direction==ComplexDirection.B2){
-            return ComplexDirection.W_BW;
+        }else if(direction==ComplexDirection.D_WEd){
+            return ComplexDirection.W_DW;
         }else if(direction==ComplexDirection.N_UN){
-            return ComplexDirection.BN;
+            return ComplexDirection.DN;
         }else if(direction==ComplexDirection.UN){
-            return ComplexDirection.N_BN;
+            return ComplexDirection.N_DN;
         }else if(direction==ComplexDirection.U_UN){
             return ComplexDirection.N;
         }else if(direction==ComplexDirection.U_US){
@@ -785,23 +797,23 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         }else if(direction==ComplexDirection.US){
             return ComplexDirection.U_UN;
         }else if(direction==ComplexDirection.S_US){
-            return ComplexDirection.U_NSdir;
-        }else if(direction==ComplexDirection.S_BS){
+            return ComplexDirection.U_NSd;
+        }else if(direction==ComplexDirection.D_DS){
             return ComplexDirection.US;
-        }else if(direction==ComplexDirection.BS){
+        }else if(direction==ComplexDirection.DS){
             return ComplexDirection.S_US;
-        }else if(direction==ComplexDirection.B_BS){
+        }else if(direction==ComplexDirection.S_DS){
             return ComplexDirection.S;
-        }else if(direction==ComplexDirection.B_BN){
-            return ComplexDirection.BS;
-        }else if(direction==ComplexDirection.BN){
-            return ComplexDirection.B_BS;
-        }else if(direction==ComplexDirection.N_BN){
-            return ComplexDirection.B1;
+        }else if(direction==ComplexDirection.D_DN){
+            return ComplexDirection.DS;
+        }else if(direction==ComplexDirection.DN){
+            return ComplexDirection.S_DS;
+        }else if(direction==ComplexDirection.N_DN){
+            return ComplexDirection.D_NSd;
         }else if(direction==ComplexDirection.E_UE){
-            return ComplexDirection.BE;
+            return ComplexDirection.DE;
         }else if(direction==ComplexDirection.UE){
-            return ComplexDirection.E_BE;
+            return ComplexDirection.E_DE;
         }else if(direction==ComplexDirection.U_UE){
             return ComplexDirection.E;
         }else if(direction==ComplexDirection.U_UW){
@@ -809,19 +821,19 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         }else if(direction==ComplexDirection.UW){
             return ComplexDirection.U_UE;
         }else if(direction==ComplexDirection.W_UW){
-            return ComplexDirection.U_WEdir;
-        }else if(direction==ComplexDirection.W_BW){
+            return ComplexDirection.U_WEd;
+        }else if(direction==ComplexDirection.W_DW){
             return ComplexDirection.UW;
-        }else if(direction==ComplexDirection.BW){
+        }else if(direction==ComplexDirection.DW){
             return ComplexDirection.W_UW;
-        }else if(direction==ComplexDirection.B_BW){
+        }else if(direction==ComplexDirection.D_DW){
             return ComplexDirection.W;
-        }else if(direction==ComplexDirection.B_BE){
-            return ComplexDirection.BW;
-        }else if(direction==ComplexDirection.BE){
-            return ComplexDirection.B_BW;
-        }else if(direction==ComplexDirection.E_BE){
-            return ComplexDirection.B2;
+        }else if(direction==ComplexDirection.D_DE){
+            return ComplexDirection.DW;
+        }else if(direction==ComplexDirection.DE){
+            return ComplexDirection.D_DW;
+        }else if(direction==ComplexDirection.E_DE){
+            return ComplexDirection.D_WEd;
         }
         return ComplexDirection.FAIL;
     }
@@ -917,18 +929,18 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
         return reflect;
     }
     private int getTier(){
-        if(getBlockState().getBlock() instanceof MirrorBlock){
-            return ((MirrorBlock) getBlockState().getBlock()).getTier();
+        Block b = getBlockState().getBlock();
+        if(b instanceof MirrorBlock){
+            return ((MirrorBlock) b).getTier();
         }
         return 0;
     }
     private double getParticleSpeed(){
-        if(this.getTier()==1){
-            return 0.2D;
-        }else if(this.getTier()==2){
-            return 0.3D;
-        }
-        return 0.2D;
+        return switch (this.getTier()) {
+            case 2 -> 0.3D;
+            default -> 0.2D;
+        };
+
     }
 
     private double[] getParticleVelocity(ComplexDirection reflectedDirection){
@@ -958,17 +970,17 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
             return new double[]{0D, vectorComponent45Degrees,vectorComponent45Degrees};
         }else if(reflectedDirection==ComplexDirection.UW){
             return new double[]{-vectorComponent45Degrees, vectorComponent45Degrees,0D};
-        }else if(reflectedDirection==ComplexDirection.BN){
+        }else if(reflectedDirection==ComplexDirection.DN){
             return new double[]{0D, -vectorComponent45Degrees,-vectorComponent45Degrees};
-        }else if(reflectedDirection==ComplexDirection.BE){
+        }else if(reflectedDirection==ComplexDirection.DE){
             return new double[]{vectorComponent45Degrees, -vectorComponent45Degrees,0D};
-        }else if(reflectedDirection==ComplexDirection.BS){
+        }else if(reflectedDirection==ComplexDirection.DS){
             return new double[]{0D, -vectorComponent45Degrees,vectorComponent45Degrees};
-        }else if(reflectedDirection==ComplexDirection.BW){
+        }else if(reflectedDirection==ComplexDirection.DW){
             return new double[]{-vectorComponent45Degrees, -vectorComponent45Degrees,0D};
-        }else if(reflectedDirection==ComplexDirection.U_NSdir ||reflectedDirection==ComplexDirection.U_WEdir){
+        }else if(reflectedDirection==ComplexDirection.U_NSd ||reflectedDirection==ComplexDirection.U_WEd){
             return new double[]{0D, speed, 0D};
-        }else if(reflectedDirection==ComplexDirection.B1||reflectedDirection==ComplexDirection.B2){
+        }else if(reflectedDirection==ComplexDirection.D_NSd ||reflectedDirection==ComplexDirection.D_WEd){
             return new double[]{0D, -speed, 0D};
         }
         return new double[]{0D, 0D, 0D};
@@ -1000,21 +1012,21 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
             return new double[]{pos.getX()+0.5D,pos.getY()+0.5D+j, pos.getZ()+0.5D+j};
         }else if(reflectedDirection==ComplexDirection.UW){
             return new double[]{pos.getX()+0.5D-j,pos.getY()+0.5D+j, pos.getZ()+0.5D};
-        }else if(reflectedDirection==ComplexDirection.BN){
+        }else if(reflectedDirection==ComplexDirection.DN){
             return new double[]{pos.getX()+0.5D,pos.getY()+0.5D-j, pos.getZ()+0.5D-j};
-        }else if(reflectedDirection==ComplexDirection.BE){
+        }else if(reflectedDirection==ComplexDirection.DE){
             return new double[]{pos.getX()+0.5D+j,pos.getY()+0.5D-j, pos.getZ()+0.5D};
-        }else if(reflectedDirection==ComplexDirection.BS){
+        }else if(reflectedDirection==ComplexDirection.DS){
             return new double[]{pos.getX()+0.5D,pos.getY()+0.5D-j, pos.getZ()+0.5D+j};
-        }else if(reflectedDirection==ComplexDirection.BW){
+        }else if(reflectedDirection==ComplexDirection.DW){
             return new double[]{pos.getX()+0.5D-j,pos.getY()+0.5D-j, pos.getZ()+0.5D};
-        }else if(reflectedDirection==ComplexDirection.U_NSdir){
+        }else if(reflectedDirection==ComplexDirection.U_NSd){
             return new double[]{pos.getX()+0.5D,pos.getY()+0.5D+i, pos.getZ()+0.5D};
-        }else if(reflectedDirection==ComplexDirection.U_WEdir){
+        }else if(reflectedDirection==ComplexDirection.U_WEd){
             return new double[]{pos.getX()+0.5D,pos.getY()+0.5D+i, pos.getZ()+0.5D};
-        }else if(reflectedDirection==ComplexDirection.B1){
+        }else if(reflectedDirection==ComplexDirection.D_NSd){
             return new double[]{pos.getX()+0.5D,pos.getY()+0.5D-i, pos.getZ()+0.5D};
-        }else if(reflectedDirection==ComplexDirection.B2){
+        }else if(reflectedDirection==ComplexDirection.D_WEd){
             return new double[]{pos.getX()+0.5D,pos.getY()+0.5D-i, pos.getZ()+0.5D};
         }
         return new double[]{pos.getX()+0.5D,pos.getY()+0.5D, pos.getZ()+0.5D};
@@ -1045,21 +1057,21 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
             return new Direction[]{Direction.UP,Direction.SOUTH};
         }else if(direction==ComplexDirection.UW){
             return new Direction[]{Direction.UP,Direction.WEST};
-        }else if(direction==ComplexDirection.U_NSdir){
+        }else if(direction==ComplexDirection.U_NSd){
             return new Direction[]{Direction.UP,null};
-        }else if(direction==ComplexDirection.U_WEdir){
+        }else if(direction==ComplexDirection.U_WEd){
             return new Direction[]{Direction.UP,null};
-        }else if(direction==ComplexDirection.BN){
+        }else if(direction==ComplexDirection.DN){
             return new Direction[]{Direction.DOWN,Direction.NORTH};
-        }else if(direction==ComplexDirection.BE){
+        }else if(direction==ComplexDirection.DE){
             return new Direction[]{Direction.DOWN,Direction.EAST};
-        }else if(direction==ComplexDirection.BS){
+        }else if(direction==ComplexDirection.DS){
             return new Direction[]{Direction.DOWN,Direction.SOUTH};
-        }else if(direction==ComplexDirection.BW){
+        }else if(direction==ComplexDirection.DW){
             return new Direction[]{Direction.DOWN,Direction.WEST};
-        }else if(direction==ComplexDirection.B1){
+        }else if(direction==ComplexDirection.D_NSd){
             return new Direction[]{Direction.DOWN,null};
-        }else if(direction==ComplexDirection.B2){
+        }else if(direction==ComplexDirection.D_WEd){
             return new Direction[]{Direction.DOWN,null};
         }else{
             return null;
@@ -1067,12 +1079,13 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
     }
     /**一度に送信する霊力の量*/
     private int getSendAmount(){
-        int i=getTier()==2? 5 : 1;
-        if(this.getStoredReiryoku()-i<0){
-            return getStoredReiryoku();
-        }else{
-            return i;
+        int i= getTier()==2? 5 : 1;
+        int r = getStoredReiryoku();
+        if(r-i<0){
+            return r;
         }
+        return i;
+
     }
 
     @Override

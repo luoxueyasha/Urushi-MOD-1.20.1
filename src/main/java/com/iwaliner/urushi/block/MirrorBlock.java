@@ -38,7 +38,7 @@ public class MirrorBlock extends BaseEntityBlock implements Tiered {
     private static final VoxelShape BASE = Block.box(6D, 0.0D, 6D, 10D, 1D, 10D);
     private static final VoxelShape PILLAR = Block.box(7D, 1.0D, 7D, 9D, 16D, 9D);
     private static final VoxelShape OUTER_BOX = Block.box(1D, 0.0D, 1D, 15D, 16D, 15D);
-    public static final IntegerProperty DIRECTION = IntegerProperty.create("complex_facing",0,30);
+    public static final IntegerProperty DIRECTION = IntegerProperty.create("complex_facing",0,30); // @debug, now max is 30. how do we change this?
 
 
     private int tier;
@@ -121,8 +121,8 @@ public class MirrorBlock extends BaseEntityBlock implements Tiered {
                     }else if(complexDirection==ComplexDirection.UN){
                         newDirection=ComplexDirection.U_UN;
                     }else if(complexDirection==ComplexDirection.U_UN){
-                        newDirection=ComplexDirection.U_NSdir;
-                    }else if(complexDirection==ComplexDirection.U_NSdir){
+                        newDirection=ComplexDirection.U_NSd;
+                    }else if(complexDirection==ComplexDirection.U_NSd){
                         newDirection=ComplexDirection.U_US;
                     }else if(complexDirection==ComplexDirection.U_US){
                         newDirection=ComplexDirection.US;
@@ -137,8 +137,8 @@ public class MirrorBlock extends BaseEntityBlock implements Tiered {
                     }else if(complexDirection==ComplexDirection.UE){
                         newDirection=ComplexDirection.U_UE;
                     }else if(complexDirection==ComplexDirection.U_UE){
-                        newDirection=ComplexDirection.U_WEdir;
-                    }else if(complexDirection==ComplexDirection.U_WEdir){
+                        newDirection=ComplexDirection.U_WEd;
+                    }else if(complexDirection==ComplexDirection.U_WEd){
                         newDirection=ComplexDirection.U_UW;
                     }else if(complexDirection==ComplexDirection.U_UW){
                         newDirection=ComplexDirection.UW;
@@ -162,7 +162,7 @@ public class MirrorBlock extends BaseEntityBlock implements Tiered {
                 direction==ComplexDirection.E||direction==ComplexDirection.E_UE ||direction==ComplexDirection.UE ||direction==ComplexDirection.U_UE ||
                 direction==ComplexDirection.S||direction==ComplexDirection.S_US ||direction==ComplexDirection.US ||direction==ComplexDirection.U_US ||
                 direction==ComplexDirection.W||direction==ComplexDirection.W_UW ||direction==ComplexDirection.UW ||direction==ComplexDirection.U_UW
-                ||direction==ComplexDirection.U_NSdir ||direction==ComplexDirection.U_WEdir;
+                ||direction==ComplexDirection.U_NSd ||direction==ComplexDirection.U_WEd;
     }
 
 }
