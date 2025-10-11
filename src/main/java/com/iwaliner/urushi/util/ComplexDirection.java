@@ -69,9 +69,9 @@ public enum ComplexDirection {
     UW      ((byte) 0xE4), // 1110 0100 Up West
     W_UW    ((byte) 0xF4), // 1111 0100 West by Up West
 
-    N_DN    ((byte) 0xF8), // 1111 1000 <-> W_UW
-    DN      ((byte) 0xE8), // 1110 1000 <-> UW
-    D_DN    ((byte) 0xD8), // 1101 1000 <-> U_UW
+    N_DN    ((byte) 0xF8), // 1111 1000 <-> S_US
+    DN      ((byte) 0xE8), // 1110 1000 <-> US
+    D_DN    ((byte) 0xD8), // 1101 1000 <-> U_US
     D_NSd   ((byte) 0xC8), // 1100 1000 <-> U_NSd
     D_DS    ((byte) 0xB8), // 1011 1000 <-> U_UN
     DS      ((byte) 0xA8), // 1010 1000 <-> UN
@@ -88,13 +88,13 @@ public enum ComplexDirection {
 
 
 
-    private short id;
+    private int id; // JVM has special optimization on int. Though we could use short and even byte, they all cost 4 bytes on stack.
 
-    ComplexDirection(short id) {
+    ComplexDirection(int id) {
         this.id = id;
     }
 
-    public short getID() {
+    public int getID() {
         return this.id;
     }
 
@@ -102,7 +102,7 @@ public enum ComplexDirection {
         if(direction == null){
             return false;
         }
-        short id = direction.getID();
+        int id = direction.getID();
         if((id&0x80) == 0){ // id is null
             return false;
         }
