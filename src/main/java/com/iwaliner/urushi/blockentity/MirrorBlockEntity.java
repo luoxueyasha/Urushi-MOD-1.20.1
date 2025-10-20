@@ -407,145 +407,31 @@ public class MirrorBlockEntity extends AbstractReiryokuStorableBlockEntity  impl
     }
     /**手前を西かつ左を北にしたとき、または手前を北かつ左を東にしたときの右回りに67.5度の方角を返す*/
     private ComplexDirection getVerticalClockwiseDistantDirection(ComplexDirection direction){
-        if(direction==ComplexDirection.FAIL){
+        int id = direction.getID();
+        if((id&0x80) == 0){ // null
             return ComplexDirection.FAIL;
-        }else if(direction==ComplexDirection.N){
-            return ComplexDirection.U_UN;
-        }else if(direction==ComplexDirection.U_NSd){
-            return ComplexDirection.S_US;
-        }else if(direction==ComplexDirection.S){
-            return ComplexDirection.S_DS;
-        }else if(direction==ComplexDirection.D_NSd){
-            return ComplexDirection.N_DN;
-        }else if(direction==ComplexDirection.E){
-            return ComplexDirection.U_UE;
-        }else if(direction==ComplexDirection.U_WEd){
-            return ComplexDirection.W_UW;
-        }else if(direction==ComplexDirection.W){
-            return ComplexDirection.D_DW;
-        }else if(direction==ComplexDirection.D_WEd){
-            return ComplexDirection.E_DE;
-        }else if(direction==ComplexDirection.N_UN){
-            return ComplexDirection.U_NSd;
-        }else if(direction==ComplexDirection.UN){
-            return ComplexDirection.U_US;
-        }else if(direction==ComplexDirection.U_UN){
-            return ComplexDirection.US;
-        }else if(direction==ComplexDirection.U_US){
-            return ComplexDirection.S;
-        }else if(direction==ComplexDirection.US){
-            return ComplexDirection.D_DS;
-        }else if(direction==ComplexDirection.S_US){
-            return ComplexDirection.DS;
-        }else if(direction==ComplexDirection.D_DS){
-            return ComplexDirection.D_NSd;
-        }else if(direction==ComplexDirection.DS){
-            return ComplexDirection.D_DN;
-        }else if(direction==ComplexDirection.S_DS){
-            return ComplexDirection.DN;
-        }else if(direction==ComplexDirection.D_DN){
-            return ComplexDirection.N;
-        }else if(direction==ComplexDirection.DN){
-            return ComplexDirection.N_UN;
-        }else if(direction==ComplexDirection.N_DN){
-            return ComplexDirection.UN;
-        }else if(direction==ComplexDirection.E_UE){
-            return ComplexDirection.U_WEd;
-        }else if(direction==ComplexDirection.UE){
-            return ComplexDirection.U_UW;
-        }else if(direction==ComplexDirection.U_UE){
-            return ComplexDirection.UW;
-        }else if(direction==ComplexDirection.U_UW){
-            return ComplexDirection.W;
-        }else if(direction==ComplexDirection.UW){
-            return ComplexDirection.W_DW;
-        }else if(direction==ComplexDirection.W_UW){
-            return ComplexDirection.DW;
-        }else if(direction==ComplexDirection.W_DW){
-            return ComplexDirection.D_WEd;
-        }else if(direction==ComplexDirection.DW){
-            return ComplexDirection.D_DE;
-        }else if(direction==ComplexDirection.D_DW){
-            return ComplexDirection.DE;
-        }else if(direction==ComplexDirection.D_DE){
-            return ComplexDirection.E;
-        }else if(direction==ComplexDirection.DE){
-            return ComplexDirection.E_UE;
-        }else if(direction==ComplexDirection.E_DE){
-            return ComplexDirection.UE;
         }
-        return ComplexDirection.FAIL;
+
+        // add 0x30 to bit6-4(mod8). If result bit6-4 has carry, flip bit3
+        int bit6_4 = (id & 0x70);
+        bit6_4 = bit6_4 + 0x30; // bit6-4 +3, keep carry
+        //  clear b6-b3  | b6-b4 no ca.  | if bit6-4 has ca., flip bit3
+        id = (id & 0x87) | bit6_4 & 0x70 | (((bit6_4 & 0x80) != 0) ? (id ^ 0x08) & 0x08 : 0);
+        return getDirectionFromID(id);
     }
     /**手前を西かつ左を北にしたとき、または手前を北かつ左を東にしたときの左回りに67.5度の方角を返す*/
     private ComplexDirection getVerticalCounterClockwiseDistantDirection(ComplexDirection direction){
-        if(direction==ComplexDirection.FAIL){
+        int id = direction.getID();
+        if((id&0x80) == 0){ // null
             return ComplexDirection.FAIL;
-        }else if(direction==ComplexDirection.N){
-            return ComplexDirection.D_DN;
-        }else if(direction==ComplexDirection.U_NSd){
-            return ComplexDirection.N_UN;
-        }else if(direction==ComplexDirection.S){
-            return ComplexDirection.U_US;
-        }else if(direction==ComplexDirection.D_NSd){
-            return ComplexDirection.D_DS;
-        }else if(direction==ComplexDirection.E){
-            return ComplexDirection.D_DE;
-        }else if(direction==ComplexDirection.U_WEd){
-            return ComplexDirection.E_UE;
-        }else if(direction==ComplexDirection.W){
-            return ComplexDirection.U_UW;
-        }else if(direction==ComplexDirection.D_WEd){
-            return ComplexDirection.W_DW;
-        }else if(direction==ComplexDirection.N_UN){
-            return ComplexDirection.DN;
-        }else if(direction==ComplexDirection.UN){
-            return ComplexDirection.N_DN;
-        }else if(direction==ComplexDirection.U_UN){
-            return ComplexDirection.N;
-        }else if(direction==ComplexDirection.U_US){
-            return ComplexDirection.UN;
-        }else if(direction==ComplexDirection.US){
-            return ComplexDirection.U_UN;
-        }else if(direction==ComplexDirection.S_US){
-            return ComplexDirection.U_NSd;
-        }else if(direction==ComplexDirection.D_DS){
-            return ComplexDirection.US;
-        }else if(direction==ComplexDirection.DS){
-            return ComplexDirection.S_US;
-        }else if(direction==ComplexDirection.S_DS){
-            return ComplexDirection.S;
-        }else if(direction==ComplexDirection.D_DN){
-            return ComplexDirection.DS;
-        }else if(direction==ComplexDirection.DN){
-            return ComplexDirection.S_DS;
-        }else if(direction==ComplexDirection.N_DN){
-            return ComplexDirection.D_NSd;
-        }else if(direction==ComplexDirection.E_UE){
-            return ComplexDirection.DE;
-        }else if(direction==ComplexDirection.UE){
-            return ComplexDirection.E_DE;
-        }else if(direction==ComplexDirection.U_UE){
-            return ComplexDirection.E;
-        }else if(direction==ComplexDirection.U_UW){
-            return ComplexDirection.UE;
-        }else if(direction==ComplexDirection.UW){
-            return ComplexDirection.U_UE;
-        }else if(direction==ComplexDirection.W_UW){
-            return ComplexDirection.U_WEd;
-        }else if(direction==ComplexDirection.W_DW){
-            return ComplexDirection.UW;
-        }else if(direction==ComplexDirection.DW){
-            return ComplexDirection.W_UW;
-        }else if(direction==ComplexDirection.D_DW){
-            return ComplexDirection.W;
-        }else if(direction==ComplexDirection.D_DE){
-            return ComplexDirection.DW;
-        }else if(direction==ComplexDirection.DE){
-            return ComplexDirection.D_DW;
-        }else if(direction==ComplexDirection.E_DE){
-            return ComplexDirection.D_WEd;
         }
-        return ComplexDirection.FAIL;
+
+        // add 0x50 to bit6-4(=-3 mod8). If result bit6-4 has no carry, flip bit3
+        int bit6_4 = (id & 0x70);
+        bit6_4 = bit6_4 + 0x50;
+        //  clear b6-b3  | b6-b4 no ca.  | if bit6-4 has no ca., flip bit3
+        id = (id & 0x87) | bit6_4 & 0x70 | (((bit6_4 & 0x80) == 0) ? (id ^ 0x08) & 0x08 : 0);
+        return getDirectionFromID(id);
     }
     /**特定の角度(パラメータ)が2つの角度の間に入っているかどうか。指定した2つの角度のいずれかとパラメータが一致する場合は含まない。そしてこの処理は45度の範囲内までしか機能していない。*/
     private boolean isIn(ComplexDirection counterclockwiseDirection,ComplexDirection clockwiseDirection,ComplexDirection parameter){

@@ -81,9 +81,9 @@ public enum ComplexDirection {
     DE      ((byte) 0xEC), // 1110 1100 <-> UW
     D_DE    ((byte) 0xDC), // 1101 1100 <-> U_UW
     D_WEd   ((byte) 0xCC), // 1100 1100 <-> U_WEd
-    W_DW    ((byte) 0xBC), // 1011 1100 <-> E_UE
+    D_DW    ((byte) 0xBC), // 1011 1100 <-> U_UE
     DW      ((byte) 0xAC), // 1010 1100 <-> UE
-    D_DW    ((byte) 0x9C); // 1001 1100 <-> U_UE
+    W_DW    ((byte) 0x9C); // 1001 1100 <-> E_UE
 
 
 
